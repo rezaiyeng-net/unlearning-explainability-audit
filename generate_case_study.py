@@ -14,7 +14,7 @@ plt.rcParams['font.serif'] = ['Times New Roman', 'DejaVu Serif']
 plt.rcParams['figure.dpi'] = 300
 
 # ============================================================
-# ۱. Loading data
+# 1. Loading data
 # ============================================================
 print("📊 Loading German Credit dataset...")
 cols = ['status','duration','credit_history','purpose','amount','savings',
@@ -37,7 +37,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # ============================================================
-# ۲.  Forget Set and training models
+# 2.  Forget Set and training models
 # ============================================================
 print("🔧 Training models...")
 np.random.seed(100)
