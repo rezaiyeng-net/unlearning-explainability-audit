@@ -19,7 +19,7 @@ FORGET_SIZES = [5, 10]
 MODELS_TO_RUN = ['LR', 'RF']
 
 # ============================================================
-# کلاس Ensemble برای SISA درختی
+# Ensemble class for tree SISA
 # ============================================================
 class EnsembleClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, models):
@@ -39,7 +39,7 @@ def create_model(model_type, random_state=42):
     elif model_type == 'RF': return RandomForestClassifier(n_estimators=50, random_state=random_state)
 
 # ============================================================
-# توابع Unlearning (با رفع باگ‌های SISA)
+# Unlearning functions (with SISA bug fixes)
 # ============================================================
 def unlearn_exact(model_type, X, y, forget_idx, seed):
     keep_mask = ~np.isin(np.arange(len(X)), forget_idx)
@@ -60,7 +60,7 @@ def unlearn_sisa(model_type, X, y, forget_idx, num_shards=5, seed=42):
         shard_mask[start:end] = True
         
         X_s, y_s = X[shard_mask], y[shard_mask]
-        # 🔴 رفع باگ تک‌کلاسه شدن شارد
+        # Fixed the bug of Shard becoming single-classed.
         if len(np.unique(y_s)) < 2:
             X_s, y_s = X, y
             
@@ -76,7 +76,7 @@ def unlearn_sisa(model_type, X, y, forget_idx, num_shards=5, seed=42):
                 new_m.fit(X[keep_mask], y[keep_mask])
                 models[i] = (new_m, shard_mask)
             else:
-                # 🔴 رفع باگ: اگر شارد بعد از حذف تک‌کلاسه شد، از کل داده‌های باقی‌مانده استفاده کن
+                # Bugfix: If shard becomes single-class after deletion, use all remaining data
                 all_keep = ~forget_mask_global
                 new_m = create_model(model_type, seed + 100 + i)
                 new_m.fit(X[all_keep], y[all_keep])
@@ -99,10 +99,10 @@ def unlearn_weighting(model_type, X, y, forget_idx, seed):
     return m
 
 # ============================================================
-# محاسبه SHAP (بهینه‌سازی شده برای سرعت فوق‌العاده)
+# SHAP calculation (optimized for extreme speed)
 # ============================================================
 def compute_global_importance(model, X_train, X_test, model_type):
-    # 🔴 کاهش نمونه‌ها به ۵۰ برای سرعت بیشتر (از نظر آماری کاملاً کافی است)
+    # Reduce samples to 50 for faster speed (statistically quite sufficient)
     X_test_sub = X_test[:50] 
     
     if hasattr(model, 'models'): # SISA Ensemble
@@ -125,7 +125,6 @@ def compute_global_importance(model, X_train, X_test, model_type):
         if isinstance(sv, list): sv = sv[1]
         return np.mean(np.abs(sv), axis=0)
     else: # LR
-        # 🔴 استفاده از LinearExplainer برای LR که هزاران برابر سریع‌تر از KernelExplainer است
         exp = shap.LinearExplainer(model, X_train)
         sv = exp.shap_values(X_test_sub)
         return np.mean(np.abs(sv), axis=0)
@@ -140,7 +139,7 @@ def compute_mia_score(model, X_train, X_forget):
         return 0.0
 
 # ============================================================
-# اجرای آزمایش
+# Running the experiment
 # ============================================================
 def run_experiment(dataset_name, X, y, model_type):
     results = []
@@ -180,7 +179,7 @@ def run_experiment(dataset_name, X, y, model_type):
     return pd.DataFrame(results)
 
 # ============================================================
-# بارگذاری دیتاست‌ها
+# Loading datasets
 # ============================================================
 def load_datasets():
     datasets = {}
