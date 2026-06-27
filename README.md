@@ -25,3 +25,25 @@ The code is modular, well-documented, and designed to support further research o
 ---
 
 ## 📁 Repository Structure
+├── code/
+│ ├── main_part1_linear_tree.py # Phase 1: LR & RF (exact SHAP explainers)
+│ ├── main_part2_advanced_models.py # Phase 2: GB & MLP (KernelExplainer)
+│ └── mia_sensitivity_analysis.py # MIA threshold sensitivity analysis
+├── results/
+│ ├── part1_results.csv # Raw outputs for Phase 1 (15 seeds)
+│ └── part2_results.csv # Raw outputs for Phase 2 (15 seeds)
+├── tables/ # Generated LaTeX tables
+├── figures/ # Generated vector-based figures
+├── requirements.txt # Python dependencies
+├── LICENSE # MIT License
+└── README.md
+
+---
+
+## ⚙️ Requirements
+
+The code requires **Python 3.8** or higher. Install all dependencies using:
+
+```bash
+pip install -r requirements.txt
+
