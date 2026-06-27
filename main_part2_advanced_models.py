@@ -13,7 +13,7 @@ import os
 warnings.filterwarnings('ignore')
 os.makedirs('results', exist_ok=True)
 
-# ====================== توابع کمکی و بارگذاری داده‌ها ======================
+# ====================== Helper functions and data loading ======================
 def load_datasets():
     datasets = {}
     
@@ -26,7 +26,6 @@ def load_datasets():
     df['target'] = df['target'].replace({1: 0, 2: 1})
     df = pd.get_dummies(df, drop_first=True)
     
-    # 🔴 لایه محافظتی ضدگلوله: تبدیل قطعی به آرایه فلوت خالص
     X_g = df.drop('target', axis=1).apply(pd.to_numeric, errors='coerce').fillna(0).values.astype(float)
     y_g = df['target'].values
     datasets['german'] = (X_g, y_g)
@@ -56,7 +55,7 @@ def load_datasets():
 
     return datasets
 
-# ====================== کلاس و توابع اصلی ======================
+# ====================== Main class and functions ======================
 class EnsembleClassifier:
     def __init__(self, models):
         self.models = models
@@ -72,10 +71,8 @@ class EnsembleClassifier:
 
 def create_model(model_type):
     if model_type == 'GB':
-        # 🔴 جایگزین استاندارد و بدون دردسر XGBoost
         return GradientBoostingClassifier(n_estimators=50, random_state=42, max_depth=3)
     elif model_type == 'MLP':
-        # خاموش کردن early_stopping برای جلوگیری از خطای SISA
         return MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42, early_stopping=False)
     else:
         raise ValueError("Unsupported model type")
@@ -114,9 +111,9 @@ def unlearn_sisa(model_type, X, y, forget_idx, num_shards=5, seed=42):
     return EnsembleClassifier(models)
 
 def compute_global_importance(model, X_train, X_test, model_type):
-    # تبدیل به numpy برای جلوگیری از ناهماهنگی ابعاد
+    # Convert to numpy to avoid dimensional inconsistency
     X_train_np = np.array(X_train)
-    X_test_np = np.array(X_test)[:200] # محدود کردن برای سرعت
+    X_test_np = np.array(X_test)[:200] # Limit for speed
     
     def extract_importance(shap_vals):
         if isinstance(shap_vals, list):
@@ -162,7 +159,7 @@ def compute_mia_score(model, X_train, X_forget):
     except:
         return 0.0
 
-# ====================== اجرای آزمایش ======================
+# ====================== Running the experiment ======================
 NUM_SEEDS = 15
 FORGET_SIZES = [5, 10]
 
@@ -210,7 +207,6 @@ if __name__ == "__main__":
     datasets = load_datasets()
     all_results = []
     
-    # 🔴 تغییر مدل از XGBoost به GB (Gradient Boosting)
     for ds_name, (X, y) in datasets.items():
         for model_type in ['GB', 'MLP']:
             print(f"\n{'='*60}\nRunning {ds_name} - {model_type} ...\n{'='*60}")
