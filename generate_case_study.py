@@ -8,13 +8,13 @@ import shap
 import warnings
 warnings.filterwarnings('ignore')
 
-# تنظیمات Publication-Ready
+#  Publication-Ready
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman', 'DejaVu Serif']
 plt.rcParams['figure.dpi'] = 300
 
 # ============================================================
-# ۱. بارگذاری داده‌ها
+# ۱. Loading data
 # ============================================================
 print("📊 Loading German Credit dataset...")
 cols = ['status','duration','credit_history','purpose','amount','savings',
@@ -37,7 +37,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # ============================================================
-# ۲. تعریف Forget Set و آموزش مدل‌ها
+# ۲.  Forget Set and training models
 # ============================================================
 print("🔧 Training models...")
 np.random.seed(100)
@@ -48,7 +48,7 @@ keep_mask = ~np.isin(np.arange(len(X_train_scaled)), forget_idx)
 exact_model = LogisticRegression(random_state=100, max_iter=1000)
 exact_model.fit(X_train_scaled[keep_mask], y_train[keep_mask])
 
-# SISA (ساده‌شده: میانگین ضرایب از 5 شارد)
+# SISA (Average of coefficients from 5 shards)
 shard_size = len(X_train_scaled) // 5
 sisa_models = []
 for i in range(5):
@@ -57,7 +57,6 @@ for i in range(5):
     shard_idx = np.arange(start, end)
     keep_in_shard = np.setdiff1d(shard_idx, forget_idx)
     if len(keep_in_shard) == 0:
-        # اگر همه‌ی نمونه‌های شارد فراموش شده‌اند، یک مدل با ضرایب صفر بسازید
         m = LogisticRegression(random_state=100+i, max_iter=1000)
         m.fit(X_train_scaled[:1], y_train[:1])  # dummy fit
         m.coef_ = np.zeros_like(m.coef_)
@@ -67,9 +66,9 @@ for i in range(5):
         m.fit(X_train_scaled[keep_in_shard], y_train[keep_in_shard])
     sisa_models.append(m)
 
-# مدل SISA نهایی: میانگین ضرایب (بدون fit مجدد)
+# Final SISA model: Average coefficients (without re-fitting)
 sisa_model = LogisticRegression(random_state=100, max_iter=1000)
-# تنظیم مستقیم ضرایب و intercept
+#  intercept
 sisa_model.coef_ = np.mean([m.coef_ for m in sisa_models], axis=0)
 sisa_model.intercept_ = np.mean([m.intercept_ for m in sisa_models], axis=0)
 sisa_model.classes_ = np.array([0, 1])  # ضروری برای predict_proba
@@ -81,14 +80,14 @@ sample_weights[forget_idx] = 0.0
 weighting_model.fit(X_train_scaled, y_train, sample_weight=sample_weights)
 
 # ============================================================
-# ۳. انتخاب نمونه مناسب با استفاده از SHAP
+# 3. Selecting the right sample using SHAP
 # ============================================================
 print("🔍 Selecting best sample for case study...")
 
-# استفاده از یک زیرنمونه از داده‌های آموزش به عنوان background
+# Using a subsample of the training data as background
 background_data = X_train_scaled[np.random.choice(len(X_train_scaled), 100, replace=False)]
 
-# ایجاد Explainer با LinearExplainer (داده‌های background به صورت ماتریس)
+# Create an Explainer with LinearExplainer (background data as a matrix)
 explainer_exact = shap.LinearExplainer(exact_model, background_data)
 explainer_sisa = shap.LinearExplainer(sisa_model, background_data)
 explainer_weight = shap.LinearExplainer(weighting_model, background_data)
@@ -97,17 +96,17 @@ shap_exact_all = explainer_exact.shap_values(X_test_scaled)
 shap_sisa_all = explainer_sisa.shap_values(X_test_scaled)
 shap_weight_all = explainer_weight.shap_values(X_test_scaled)
 
-# محاسبه FID محلی برای هر نمونه (فاصله اقلیدسی بین SHAP SISA و Exact)
+# Calculate local FID for each sample (Euclidean distance between SHAP SISA and Exact)
 fid_per_sample = np.linalg.norm(shap_sisa_all - shap_exact_all, axis=1)
 
-# انتخاب نمونه‌هایی که به‌درستی پیش‌بینی شده‌اند
+#Selecting examples that are correctly predicted
 predictions_exact = exact_model.predict(X_test_scaled)
 correct_mask = (predictions_exact == y_test)
 
 valid_fid = fid_per_sample.copy()
 valid_fid[~correct_mask] = 0
 
-# ۱۰ نمونه برتر با بیشترین FID محلی
+#Top 10 examples with the highest local FID
 top_indices = np.argsort(valid_fid)[::-1][:10]
 
 print("\n📋 Top 10 candidates for case study:")
@@ -122,7 +121,7 @@ print(f"   Predicted: {predictions_exact[best_sample_idx]}")
 print(f"   Local FID: {valid_fid[best_sample_idx]:.4f}")
 
 # ============================================================
-# ۴. استخراج SHAP values برای نمونه انتخابی
+# 4. Extract SHAP values ​​for the selected sample
 # ============================================================
 shap_exact_sample = shap_exact_all[best_sample_idx]
 shap_sisa_sample = shap_sisa_all[best_sample_idx]
@@ -136,7 +135,7 @@ for i, (feat, val) in enumerate(zip(top_5_names, shap_exact_sample[top_5_idx]), 
     print(f"  {i}. {feat}: SHAP={val:.4f}")
 
 # ============================================================
-# ۵. رسم نمودار
+# 5. Drawing a diagram
 # ============================================================
 print("\n🎨 Generating case study figure...")
 
@@ -174,7 +173,7 @@ plt.savefig('figures/case_study_shap.png', dpi=300, bbox_inches='tight')
 print("✅ Case study figure saved to figures/case_study_shap.pdf")
 
 # ============================================================
-# ۶. خلاصه
+# 6. Summary
 # ============================================================
 print("\n" + "="*60)
 print("CASE STUDY SUMMARY")
