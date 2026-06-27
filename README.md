@@ -1,8 +1,10 @@
 # Beyond Accuracy: The Explanation Stability Gap in Machine Unlearning
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxxx)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-This repository provides the complete source code, experimental results, and analysis scripts for the paper:
+This repository contains the complete source code and experimental framework for the paper:
 
 > **"Beyond Accuracy: The Explanation Stability Gap in Machine Unlearning"**  
 > Hossein Rezaee  
@@ -10,15 +12,15 @@ This repository provides the complete source code, experimental results, and ana
 
 ---
 
-## 📄 Overview
+## 📖 Overview
 
-This repository implements the **Feature Importance Distance (FID)** metric and the full evaluation framework described in the paper. It is designed for researchers and practitioners who have read the paper and wish to:
+This repository provides a fully reproducible implementation of the **Feature Importance Distance (FID)** metric and the evaluation framework described in the paper. It is intended for researchers and practitioners who have read the paper and wish to:
 
-- Reproduce all experimental results (Tables 1–10 and Figures 1–4)
+- Reproduce all experimental results, including all tables (1–10) and figures (1–4)
 - Compute FID on their own unlearned models
-- Extend the evaluation framework to new datasets, models, or unlearning algorithms
+- Extend the framework to new datasets, model architectures, or unlearning algorithms
 
-The codebase is structured to be modular, well-documented, and fully reproducible.
+The code is modular, well-documented, and designed to support further research on explanation stability in machine unlearning.
 
 ---
 
